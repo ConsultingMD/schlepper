@@ -38,7 +38,7 @@ module Schlepper
 
       migrator = Class.new(migrator_class) do
         def change
-          create_table :schlepper_tasks do |t|
+          create_table :schlepper_tasks, id: false do |t|
             t.string :version
             t.string :owner
             t.text :description
