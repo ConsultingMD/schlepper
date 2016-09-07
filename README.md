@@ -1,5 +1,10 @@
 # Schlepper
+[![Code Climate](https://codeclimate.com/repos/57cf60bd8ffd8f13f100096b/badges/31af7643bb2adb58ccb7/gpa.svg)](https://codeclimate.com/repos/57cf60bd8ffd8f13f100096b/feed)
+[![Test Coverage](https://codeclimate.com/repos/57cf60bd8ffd8f13f100096b/badges/31af7643bb2adb58ccb7/coverage.svg)](https://codeclimate.com/repos/57cf60bd8ffd8f13f100096b/coverage)
+[![Build Status](https://travis-ci.org/ConsultingMD/schlepper.svg?branch=master)](https://travis-ci.org/ConsultingMD/schlepper)
+
 _Schlepper: a person who carries, a task runner_
+
 A gem for running and keeping track of one time tasks in a Rails application. Tasks
 are versioned and tracked much like Rails migrations.
 
@@ -110,9 +115,10 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/Consul
 
 ## License
 
-Schlepper is released under the ![MIT License](https://opensource.org/licenses/MIT).
+Schlepper is released under the [MIT License](https://opensource.org/licenses/MIT).
 
 ## TODO
 
 Implement saving the change registry by providing some back-ends.
+
 Implement rolling back a task
