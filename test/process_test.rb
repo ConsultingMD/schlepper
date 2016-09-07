@@ -56,9 +56,31 @@ class ProcessTest < Minitest::Test
   end
 
   def test_runs_tasks_that_need_processed
-    Rails.stub :root, Pathname.new(File.join(File.expand_path(File.dirname(__FILE__)), 'support')) do
+    stub_rails_root_to 'valid_task' do
       Schlepper::Process.new.run_all
       refute_empty ActiveRecord::Base.connection.exec_query('SELECT version FROM schlepper_tasks').rows
+    end
+  end
+
+  def test_failed_task_with_failure_message
+    stub_rails_root_to 'failed_task' do
+      assert_output(/boop/) do
+        Schlepper::Process.new.run_all
+      end
+    end
+  end
+
+  def test_failed_task_without_failure_messave
+    stub_rails_root_to 'failed_task_no_message' do
+      assert_output(/noname/) do
+        Schlepper::Process.new.run_all
+      end
+    end
+  end
+
+  private def stub_rails_root_to fixture_path
+    Rails.stub :root, Pathname.new(File.join(File.expand_path(File.dirname(__FILE__)), 'support', fixture_path)) do
+      yield
     end
   end
 end
