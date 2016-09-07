@@ -8,14 +8,18 @@ class ProcessTest < Minitest::Test
     super
     $stdout = StringIO.new
     ActiveRecord::Base.connection.send(start_transaction_method)
-    ActiveRecord::Base.connection.increment_open_transactions
+    if ActiveRecord::VERSION::MAJOR < 4
+      ActiveRecord::Base.connection.increment_open_transactions
+    end
   end
 
   def teardown
     super
     $stdout = @original_stdout
     ActiveRecord::Base.connection.send(end_transaction_method)
-    ActiveRecord::Base.connection.decrement_open_transactions
+    if ActiveRecord::VERSION::MAJOR < 4
+      ActiveRecord::Base.connection.decrement_open_transactions
+    end
   end
 
   def start_transaction_method
