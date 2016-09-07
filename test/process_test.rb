@@ -22,7 +22,7 @@ class ProcessTest < Minitest::Test
     if ActiveRecord::VERSION::MAJOR < 4
       :begin_db_transaction
     else
-      :rollback_transaction
+      :begin_transaction
     end
   end
 
