@@ -12,12 +12,7 @@ module Schlepper
     end
 
     module ClassMethods
-      # Marks a method as 'abstract'. That is, it is not intended to be used
-      # without overriding and implementing. Essentially re-defines the method
-      # to throw a NotImplementedError if called directly or
-      # when subclassed and not overridden.
-      # @param [String, Symbol] Name of method to mark as abstract
-      # @return [Symbol] Name of method
+      # @private
       def __abstract_methods__
         @__abstract_methods__
       end
@@ -31,6 +26,12 @@ module Schlepper
         subclass.instance_variable_set :@__abstract_methods__, @__abstract_methods__.dup
       end
 
+      # Marks a method as 'abstract'. That is, it is not intended to be used
+      # without overriding and implementing. Essentially re-defines the method
+      # to throw a NotImplementedError if called directly or
+      # when subclassed and not overridden.
+      # @param [String, Symbol] Name of method to mark as abstract
+      # @return [Symbol] Name of method
       def abstract method_name
         # this implementation is a little long on purpose to encapsulate
         # all of the logic into one method. we do not want to pollute the destination
