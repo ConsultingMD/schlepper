@@ -81,7 +81,7 @@ module Schlepper
         if runner.run
           ActiveRecord::Base.connection.execute <<-SQL
             INSERT INTO schlepper_tasks (version, owner, description, completed_at)
-            VALUES (#{runner.version_number}, "#{runner.owner}", "#{runner.description}", "#{Time.now}");
+            VALUES (#{runner.version_number}, #{ActiveRecord::Base.sanitize(runner.owner)}, #{ActiveRecord::Base.sanitize(runner.description)}, #{ActiveRecord::Base.connection.quote(Time.now.to_s)});
           SQL
         else
           puts "#{klass.name} ran without errors, but was not successful"
