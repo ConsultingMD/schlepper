@@ -62,7 +62,7 @@ module Schlepper
     end
 
     private def load_tasks_that_need_run
-      Dir.glob("#{Rails.root}/script/schleppers/*.rb").
+      Dir.glob("#{Rails.root}/#{Paths::TASK_DIR}/*.rb").
         map { |f| File.basename(f) }.
         reject { |f| f.scan(/\A(\d{10,})/).empty? }.
         reject { |f| @versions.has_key?(f.scan(/\A(\d{10,})/).first.first) }.
