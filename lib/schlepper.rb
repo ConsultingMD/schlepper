@@ -7,4 +7,5 @@ module Schlepper
   autoload :Process, 'schlepper/process'
   autoload :Task, 'schlepper/task'
   autoload :AbstractMethodHelper, 'schlepper/abstract_method_helper'
+  autoload :Paths, 'schlepper/paths'
 end

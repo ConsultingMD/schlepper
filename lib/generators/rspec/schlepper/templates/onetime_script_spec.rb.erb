@@ -1,0 +1,9 @@
+require_relative '<%= require_task_path %>'
+
+describe <%= task_name.classify %> do
+  let(:task) { described_class.new }
+
+  it 'returns true for success' do
+    expect(task.run).to be true
+  end
+end
