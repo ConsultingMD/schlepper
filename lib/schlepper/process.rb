@@ -86,9 +86,9 @@ module Schlepper
         else
           puts "#{klass.name} ran without errors, but was not successful"
           if runner.failure_message
-            puts "The resulting falure was: #{runner.failure_message}"
+            puts "The resulting failure was: #{runner.failure_message}"
           else
-            puts "The falure message was not set. Find #{runner.owner} to help investigate"
+            puts "The failure message was not set. Find #{runner.owner} to help investigate"
           end
           fail ActiveRecord::Rollback
         end
