@@ -4,6 +4,8 @@ require 'active_record'
 module Schlepper
   class Process
     def run_all
+      old_sync = STDOUT.sync
+      STDOUT.sync = true
       create_table_if_necessary
       fetch_script_numbers_from_database
       load_tasks_that_need_run
@@ -16,6 +18,8 @@ module Schlepper
       offending_file = e.send(:caller_locations).first.path.split("/").last
       puts "#{offending_file} caused an error: "
       raise e
+    ensure
+      STDOUT.sync = old_sync
     end
 
     private def create_table_if_necessary
