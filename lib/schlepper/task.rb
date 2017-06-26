@@ -23,6 +23,10 @@ module Schlepper
       @version_number ||= File.basename(method(:run).source_location.first).scan(/\A(\d{10,})/).first.first
     end
 
+    # Signals to the task runner that this task will control its own transaction.
+    # When true the task runner will not open a transaction.
+    # Use with caution.
+    # @return [Boolean]
     def controls_transaction?
       false
     end

@@ -114,7 +114,7 @@ Use `rake schlepper:run` to start the task running process. The task running pro
     - Roll back transaction
     - Display the name of the owner, and @failure\_message if provided
 
-The transaction steps are skipped if `USE_TRANSACTION` is `false`.
+The transaction steps are skipped if `controls_transaction?` is defined and returns `true`.
 
 ## Development
 
