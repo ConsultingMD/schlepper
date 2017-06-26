@@ -23,6 +23,10 @@ module Schlepper
       @version_number ||= File.basename(method(:run).source_location.first).scan(/\A(\d{10,})/).first.first
     end
 
+    def controls_transaction?
+      true
+    end
+
     # @return [String] Short note on the intent of this script
     # @abstract
     abstract def description
