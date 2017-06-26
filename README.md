@@ -45,6 +45,8 @@ override:
 
 ```ruby
 class NameOfTask < Schlepper::Task
+  USE_TRANSACTION = true
+
   attr_reader :failure_message
 
   # @return [String] A short note on what the purpose of this task is
@@ -82,6 +84,9 @@ of the `run` method. You must return a literal `true` to signal to the task runn
 has completed successfully. Any return value other than `true` will signal to the task runner
 that this task has not completed successfully, and will not be marked as successful.
 
+The class constant `USE_TRANSACTION` is optional and defaults to `true`. If set to `false`, the task
+won't run in a transaction, and returning false will not roll anything back.
+
 Also take note of the instance variable `@failure_message`. Setting this to something
 descriptive if your task fails provides meaningful output to the person running the task.
 
@@ -102,6 +107,8 @@ Use `rake schlepper:run` to start the task running process. The task running pro
   - Otherwise
     - Roll back transaction
     - Display the name of the owner, and @failure\_message if provided
+
+The transaction steps are skipped if `USE_TRANSACTION` is `false`.
 
 ## Development
 
