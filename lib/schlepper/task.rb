@@ -24,7 +24,7 @@ module Schlepper
     end
 
     def controls_transaction?
-      true
+      false
     end
 
     # @return [String] Short note on the intent of this script
