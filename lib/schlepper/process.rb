@@ -74,33 +74,51 @@ module Schlepper
     end
 
     private def process_one klass
-      runner = klass.new
+      task = klass.new
 
       puts ''
-      puts "Processing #{klass.name} from #{runner.owner}:"
-      puts "#{runner.description}"
+      puts "Processing #{klass.name} from #{task.owner}:"
+      puts "#{task.description}"
       puts ''
 
-      ActiveRecord::Base.transaction do
-        if runner.run
-          ActiveRecord::Base.connection.execute <<-SQL
-            INSERT INTO schlepper_tasks (version, owner, description, completed_at)
-            VALUES (#{runner.version_number}, #{ActiveRecord::Base.sanitize(runner.owner)}, #{ActiveRecord::Base.sanitize(runner.description)}, #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))});
-          SQL
-        else
-          puts "#{klass.name} ran without errors, but was not successful"
-          if runner.failure_message
-            puts "The resulting failure was: #{runner.failure_message}"
-          else
-            puts "The failure message was not set. Find #{runner.owner} to help investigate"
+      if task.controls_transaction?
+        status = run_task_for task
+        log_error(klass.name, task.failure_message, task.owner) unless status
+      else
+        ActiveRecord::Base.transaction do
+          status = run_task_for task
+          unless status
+            log_error(klass.name, task.failure_message, task.owner)
+            fail ActiveRecord::Rollback
           end
-          fail ActiveRecord::Rollback
         end
       end
 
       puts ''
       puts "Finished #{klass.name}"
       puts '~~~~~~~~~~~~~~~~~~~~~'
+    end
+
+    private def run_task_for(task)
+      status = task.run
+
+      if status
+        ActiveRecord::Base.connection.execute <<-SQL
+          INSERT INTO schlepper_tasks (version, owner, description, completed_at)
+          VALUES (#{task.version_number}, #{ActiveRecord::Base.sanitize(task.owner)}, #{ActiveRecord::Base.sanitize(task.description)}, #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))});
+        SQL
+      end
+
+      status
+    end
+
+    private def log_error(name, message, owner)
+      puts "#{name} ran without errors, but was not successful"
+      if message
+        puts "The resulting failure was: #{message}"
+      else
+        puts "The failure message was not set. Find #{owner} to help investigate"
+      end
     end
   end
 end

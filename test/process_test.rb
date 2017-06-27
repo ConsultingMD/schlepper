@@ -44,14 +44,16 @@ class ProcessTest < Minitest::Test
     ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: ':memory:'
   end
 
+  def finder_method
+    if Rails::VERSION::MAJOR >= 5
+      :data_source_exists?
+    else
+      :table_exists?
+    end
+  end
+
   def test_creates_task_log_table
     Schlepper::Process.new.run_all
-    finder_method = if Rails::VERSION::MAJOR >= 5
-                      :data_source_exists?
-                    else
-                      :table_exists?
-                    end
-
     assert ActiveRecord::Base.connection.send(finder_method, 'schlepper_tasks')
   end
 
@@ -75,6 +77,13 @@ class ProcessTest < Minitest::Test
       assert_output(/noname/) do
         Schlepper::Process.new.run_all
       end
+    end
+  end
+
+  def test_does_not_rollback_no_transaction_task
+    stub_rails_root_to 'no_transaction_task' do
+      Schlepper::Process.new.run_all
+      assert ActiveRecord::Base.connection.send(finder_method, :not_deleted)
     end
   end
 
