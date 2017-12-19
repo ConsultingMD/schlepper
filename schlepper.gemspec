@@ -8,6 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = Schlepper::VERSION
   spec.authors       = ["Rory O'Connell"]
   spec.email         = ["rory.oconnell@grandrounds.com"]
+  spec.licenses      = ['MIT']
 
   spec.summary       = %q{Adds tracking of one off data scripts for Rails.}
   spec.description   = %q{}
