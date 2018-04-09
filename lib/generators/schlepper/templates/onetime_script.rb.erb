@@ -1,6 +1,14 @@
 class <%= file_name.classify %> < Schlepper::Task
   attr_reader :failure_message
 
+  # Signals to the task runner that this task will control its own transaction.
+  # When true the task runner will not open a transaction.
+  # Use with caution.
+  # @return [Boolean]
+  def controls_transaction?
+    false
+  end
+
   # @return [String] A short note on what the purpose of this task is
   def description
     <<-DOC.strip_heredoc
@@ -9,7 +17,7 @@ class <%= file_name.classify %> < Schlepper::Task
     fail NotImplementedError, "Documentation has not been added for #{self.class.name}"
   end
 
-  # @return [String] The individuals that owns this task
+  # @return [String] The individual that owns this task
   def owner
     "John Bjön"
     fail NotImplementedError, "Ownership has not been claimed for #{self.class.name}"
