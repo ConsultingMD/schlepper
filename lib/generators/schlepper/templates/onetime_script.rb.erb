@@ -17,7 +17,7 @@ class <%= file_name.classify %> < Schlepper::Task
     fail NotImplementedError, "Documentation has not been added for #{self.class.name}"
   end
 
-  # @return [String] The individual that owns this task
+  # @return [String] The individuals that own this task
   def owner
     "John Bjön"
     fail NotImplementedError, "Ownership has not been claimed for #{self.class.name}"
