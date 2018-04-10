@@ -46,6 +46,7 @@ module Schlepper
             t.string :version
             t.string :owner
             t.text :description
+            t.datetime :started_at
             t.datetime :completed_at
           end
         end
@@ -75,6 +76,7 @@ module Schlepper
     end
 
     private def process_one klass
+      started_at = ActiveRecord::Base.connection.quote(Time.now.to_s(:db))
       task = klass.new
 
       puts ''
@@ -83,11 +85,11 @@ module Schlepper
       puts ''
 
       if task.controls_transaction?
-        status = run_task_for task
+        status = run_task_for task, started_at
         log_error(klass.name, task.failure_message, task.owner) unless status
       else
         ActiveRecord::Base.transaction do
-          status = run_task_for task
+          status = run_task_for task, started_at
           unless status
             log_error(klass.name, task.failure_message, task.owner)
             fail ActiveRecord::Rollback
@@ -100,13 +102,13 @@ module Schlepper
       puts '~~~~~~~~~~~~~~~~~~~~~'
     end
 
-    private def run_task_for(task)
+    private def run_task_for(task, started_at)
       status = task.run
 
       if status
         ActiveRecord::Base.connection.execute <<-SQL
-          INSERT INTO schlepper_tasks (version, owner, description, completed_at)
-          VALUES (#{task.version_number}, #{ActiveRecord::Base.sanitize(task.owner)}, #{ActiveRecord::Base.sanitize(task.description)}, #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))});
+          INSERT INTO schlepper_tasks (version, owner, description, started_at, completed_at)
+          VALUES (#{task.version_number}, #{ActiveRecord::Base.sanitize(task.owner)}, #{ActiveRecord::Base.sanitize(task.description)}, #{started_at}, #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))});
         SQL
       end
 
