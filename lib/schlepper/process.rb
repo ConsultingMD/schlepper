@@ -3,23 +3,33 @@ require 'active_record'
 
 module Schlepper
   class Process
-    def run_all
-      old_sync = STDOUT.sync
+    def initialize
+      @old_sync = STDOUT.sync
       STDOUT.sync = true
       create_table_if_necessary
       fetch_script_numbers_from_database
+    end
+
+    def run_all
       load_tasks_that_need_run
 
       puts "#{Schlepper::Task.children.count} tasks to process"
       puts '~~~~~~~~~~~~~~~~~~~~~'
 
       Schlepper::Task.children.each { |klass| process_one klass }
-    rescue => e
-      offending_file = e.send(:caller_locations).first.path.split("/").last
-      puts "#{offending_file} caused an error: "
-      raise e
     ensure
-      STDOUT.sync = old_sync
+      STDOUT.sync = @old_sync
+    end
+
+    def run_single_task version_number
+      load_tasks_that_need_run only_version: version_number
+      if Schlepper::Task.children.empty?
+        fail ArgumentError, "Task version number #{version_number} not found"
+      end
+
+      process_one Schlepper::Task.children.first
+    ensure
+      STDOUT.sync = @old_sync
     end
 
     private def create_table_if_necessary
@@ -65,61 +75,72 @@ module Schlepper
         map { |r| [r.fetch('version').to_s, true] }.to_h
     end
 
-    private def load_tasks_that_need_run
+    private def load_tasks_that_need_run only_version: nil
       Dir.glob("#{Rails.root}/#{Paths::TASK_DIR}/*.rb").
         map { |f| File.basename(f) }.
         sort.
-        reject { |f| f.scan(/\A(\d{10,})/).empty? }.
-        reject { |f| @versions.has_key?(f.scan(/\A(\d{10,})/).first.first) }.
-        each { |f| require File.join(Rails.root, 'script', 'schleppers', f) }
-    end
+        each { |f|
+          next if f.scan(/\A(\d{10,})/).empty? ||
+            @versions.has_key?(f.scan(/\A(\d{10,})/).first.first)
 
-    private def process_one klass
-      task = klass.new
+          if only_version
+            next if f.include? only_version
+          end
 
-      puts ''
-      puts "Processing #{klass.name} from #{task.owner}:"
-      puts "#{task.description}"
-      puts ''
+          require File.join(Rails.root, 'script', 'schleppers', f)
+        }
+   end
 
-      if task.controls_transaction?
-        status = run_task_for task
-        log_error(klass.name, task.failure_message, task.owner) unless status
-      else
-        ActiveRecord::Base.transaction do
+      private def process_one klass
+        task = klass.new
+
+        puts ''
+        puts "Processing #{klass.name} from #{task.owner}:"
+        puts "#{task.description}"
+        puts ''
+
+        if task.controls_transaction?
           status = run_task_for task
-          unless status
-            log_error(klass.name, task.failure_message, task.owner)
-            fail ActiveRecord::Rollback
+          log_error(klass.name, task.failure_message, task.owner) unless status
+        else
+          ActiveRecord::Base.transaction do
+            status = run_task_for task
+            unless status
+              log_error(klass.name, task.failure_message, task.owner)
+              fail ActiveRecord::Rollback
+            end
           end
         end
+
+        puts ''
+        puts "Finished #{klass.name}"
+        puts '~~~~~~~~~~~~~~~~~~~~~'
+      rescue => e
+        offending_file = e.send(:caller_locations).first.path.split("/").last
+        puts "#{offending_file} caused an error: "
+        raise e
       end
 
-      puts ''
-      puts "Finished #{klass.name}"
-      puts '~~~~~~~~~~~~~~~~~~~~~'
-    end
+      private def run_task_for(task)
+        status = task.run
 
-    private def run_task_for(task)
-      status = task.run
+        if status
+          ActiveRecord::Base.connection.execute <<-SQL
+            INSERT INTO schlepper_tasks (version, owner, description, completed_at)
+            VALUES (#{task.version_number}, #{ActiveRecord::Base.connection.quote(task.owner)}, #{ActiveRecord::Base.connection.quote(task.description)}, #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))});
+          SQL
+        end
 
-      if status
-        ActiveRecord::Base.connection.execute <<-SQL
-          INSERT INTO schlepper_tasks (version, owner, description, completed_at)
-          VALUES (#{task.version_number}, #{ActiveRecord::Base.connection.quote(task.owner)}, #{ActiveRecord::Base.connection.quote(task.description)}, #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))});
-        SQL
+        status
       end
 
-      status
-    end
-
-    private def log_error(name, message, owner)
-      puts "#{name} ran without errors, but was not successful"
-      if message
-        puts "The resulting failure was: #{message}"
-      else
-        puts "The failure message was not set. Find #{owner} to help investigate"
+      private def log_error(name, message, owner)
+        puts "#{name} ran without errors, but was not successful"
+        if message
+          puts "The resulting failure was: #{message}"
+        else
+          puts "The failure message was not set. Find #{owner} to help investigate"
+        end
       end
     end
   end
-end

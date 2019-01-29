@@ -87,6 +87,24 @@ class ProcessTest < Minitest::Test
     end
   end
 
+  def test_respects_provided_version_number
+    stub_rails_root_to 'single_version_test' do
+      Schlepper::Process.new.run_single_task '201809240002'
+    end
+  end
+
+  def test_fails_when_provided_an_invalid_version_number
+    stub_rails_root_to 'single_version_test' do
+      Schlepper::Process.new.run_single_task '201809240002'
+    end
+  end
+
+  def test_does_not_run_other_version_when_provided_version_number
+    stub_rails_root_to 'single_version_test' do
+      Schlepper::Process.new.run_single_task '201809240002'
+    end
+  end
+
   private def stub_rails_root_to fixture_path
     Rails.stub :root, Pathname.new(File.join(File.expand_path(File.dirname(__FILE__)), 'support', fixture_path)) do
       yield
