@@ -80,67 +80,67 @@ module Schlepper
         map { |f| File.basename(f) }.
         sort.
         each { |f|
-          next if f.scan(/\A(\d{10,})/).empty? ||
-            @versions.has_key?(f.scan(/\A(\d{10,})/).first.first)
+        next if f.scan(/\A(\d{10,})/).empty? ||
+          @versions.has_key?(f.scan(/\A(\d{10,})/).first.first)
 
-          if only_version
-            next if f.include? only_version
-          end
+        if only_version
+          next if f.include? only_version
+        end
 
-          require File.join(Rails.root, 'script', 'schleppers', f)
-        }
-   end
+        require File.join(Rails.root, 'script', 'schleppers', f)
+      }
+    end
 
-      private def process_one klass
-        task = klass.new
+    private def process_one klass
+      task = klass.new
 
-        puts ''
-        puts "Processing #{klass.name} from #{task.owner}:"
-        puts "#{task.description}"
-        puts ''
+      puts ''
+      puts "Processing #{klass.name} from #{task.owner}:"
+      puts "#{task.description}"
+      puts ''
 
-        if task.controls_transaction?
+      if task.controls_transaction?
+        status = run_task_for task
+        log_error(klass.name, task.failure_message, task.owner) unless status
+      else
+        ActiveRecord::Base.transaction do
           status = run_task_for task
-          log_error(klass.name, task.failure_message, task.owner) unless status
-        else
-          ActiveRecord::Base.transaction do
-            status = run_task_for task
-            unless status
-              log_error(klass.name, task.failure_message, task.owner)
-              fail ActiveRecord::Rollback
-            end
+          unless status
+            log_error(klass.name, task.failure_message, task.owner)
+            fail ActiveRecord::Rollback
           end
         end
-
-        puts ''
-        puts "Finished #{klass.name}"
-        puts '~~~~~~~~~~~~~~~~~~~~~'
-      rescue => e
-        offending_file = e.send(:caller_locations).first.path.split("/").last
-        puts "#{offending_file} caused an error: "
-        raise e
       end
 
-      private def run_task_for(task)
-        status = task.run
+      puts ''
+      puts "Finished #{klass.name}"
+      puts '~~~~~~~~~~~~~~~~~~~~~'
+    rescue => e
+      offending_file = e.send(:caller_locations).first.path.split("/").last
+      puts "#{offending_file} caused an error: "
+      raise e
+    end
 
-        if status
-          ActiveRecord::Base.connection.execute <<-SQL
-            INSERT INTO schlepper_tasks (version, owner, description, completed_at)
-            VALUES (#{task.version_number}, #{ActiveRecord::Base.connection.quote(task.owner)}, #{ActiveRecord::Base.connection.quote(task.description)}, #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))});
-          SQL
-        end
+    private def run_task_for(task)
+      status = task.run
 
-        status
+      if status
+        ActiveRecord::Base.connection.execute <<-SQL
+    INSERT INTO schlepper_tasks (version, owner, description, completed_at)
+    VALUES (#{task.version_number}, #{ActiveRecord::Base.connection.quote(task.owner)}, #{ActiveRecord::Base.connection.quote(task.description)}, #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))});
+  SQL
       end
 
-      private def log_error(name, message, owner)
-        puts "#{name} ran without errors, but was not successful"
-        if message
-          puts "The resulting failure was: #{message}"
-        else
-          puts "The failure message was not set. Find #{owner} to help investigate"
-        end
+      status
+    end
+
+    private def log_error(name, message, owner)
+      puts "#{name} ran without errors, but was not successful"
+      if message
+        puts "The resulting failure was: #{message}"
+      else
+        puts "The failure message was not set. Find #{owner} to help investigate"
       end
     end
   end
+end
