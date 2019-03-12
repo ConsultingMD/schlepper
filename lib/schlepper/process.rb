@@ -106,7 +106,12 @@ module Schlepper
       if status
         ActiveRecord::Base.connection.execute <<-SQL
           INSERT INTO schlepper_tasks (version, owner, description, completed_at)
-          VALUES (#{task.version_number}, #{ActiveRecord::Base.connection.quote(task.owner)}, #{ActiveRecord::Base.connection.quote(task.description)}, #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))});
+          VALUES (
+            #{task.version_number},
+            #{ActiveRecord::Base.connection.quote(task.owner)},
+            #{ActiveRecord::Base.connection.quote(task.description.mb_chars.compose.limit(256))},
+            #{ActiveRecord::Base.connection.quote(Time.now.to_s(:db))}
+          );
         SQL
       end
 
