@@ -9,7 +9,7 @@ class <%= file_name.classify %> < Schlepper::Task
     false
   end
 
-  # @return [String] A short note on what the purpose of this task is
+  # @return [String] A *short* (< 256 characters) note on what the purpose of this task is
   def description
     <<-DOC.strip_heredoc
       Add your documentation here.
