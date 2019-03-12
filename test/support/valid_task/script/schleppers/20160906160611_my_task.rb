@@ -5,9 +5,9 @@ class MyTask < Schlepper::Task
 
   # @return [String] A short note on what the purpose of this task is
   def description
-     <<-DOC.strip_heredoc
-       No doc
-     DOC
+    <<-DOC.strip_heredoc
+      No doc
+    DOC
   end
 
   # @return [String] The individuals that owns this task
