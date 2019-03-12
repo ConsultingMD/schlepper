@@ -1,13 +1,11 @@
 require 'active_support/core_ext/string'
 
-class MyTask < Schlepper::Task
+class LongUTF8Description < Schlepper::Task
   attr_reader :failure_message
 
   # @return [String] A short note on what the purpose of this task is
   def description
-     <<-DOC.strip_heredoc
-       No doc
-     DOC
+    'wackamöle \u1F60 ' * 26
   end
 
   # @return [String] The individuals that owns this task
