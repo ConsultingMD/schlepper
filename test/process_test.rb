@@ -80,6 +80,15 @@ class ProcessTest < Minitest::Test
     end
   end
 
+  def test_valid_task_too_long_description_ok
+    stub_rails_root_to 'valid_task_too_long_description' do
+      # We're really just expecting it not to raise an exception when recording it in the DB.
+      assert_output(/wackamöle /) do
+        Schlepper::Process.new.run_all
+      end
+    end
+  end
+
   def test_does_not_rollback_no_transaction_task
     stub_rails_root_to 'no_transaction_task' do
       Schlepper::Process.new.run_all
